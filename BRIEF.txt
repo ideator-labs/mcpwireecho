@@ -1,0 +1,56 @@
+Build McpWireEcho: a self-proving MCP protocol-version dialect probe.
+
+CLAIM: Offering protocolVersion 2026-07-28 classifies a target as old_only, echo_negotiator, or discover_ok. A server that echoes the requested version is not the same as one that implements server/discover.
+
+DATA SHAPE (name these first, before logic):
+- DialectClass = "old_only" | "echo_negotiator" | "discover_ok"
+- ProbeReport: { target, class, offeredVersion, initializeEcho?, discover: {ok|errorCode}, evidence[] }
+- Three fixture server behaviors (in-process fakes, no network required):
+  1) old_only: initialize returns protocolVersion 2025-06-18; server/discover returns JSON-RPC -32601
+  2) echo_negotiator: initialize/meta echoes whatever protocolVersion was offered (including 2026-07-28); server/discover still -32601
+  3) discover_ok: server/discover returns DiscoverResult with supportedVersions including 2026-07-28
+
+DEMO (the real artifact):
+- bash demo.sh
+- Probes all three fakes, prints PATH A/B/C PASS or FAIL with clear before/after
+- Writes report.json (or per-target reports)
+- Exit 0 only if all three classifications match expected
+- Exit non-zero if any class drifts
+- Break one fixture on purpose once during development to confirm demo fails, then restore
+
+CONSTRAINTS (poteto-mode):
+- Python 3.10+ stdlib only (like sibling mcpauthgate)
+- Simple code; name data shape first
+- Comments only for non-obvious why
+- README: short plain sentences, no em-dashes, honest limits, no fabricated links
+- REQUIRED AGENTS.md at repo root for a cold-start coding agent (see template expectations below)
+- One line near top of README pointing to AGENTS.md
+- Verify against real demo.sh output, not "it compiles"
+
+REPO LAYOUT (suggested):
+- src/dialect.py  DialectClass + classify logic
+- src/servers.py  three in-process fake servers
+- src/probe.py    probe offering 2026-07-28
+- demo.sh
+- README.md
+- AGENTS.md
+- requirements.txt (note stdlib-only)
+- .gitignore (ignore report.json / caches / __pycache__)
+
+AGENTS.md must cover in order:
+1. what it is + one claim
+2. status real vs stubbed
+3. data shape with file paths
+4. repo map
+5. exact setup/run/verify from fresh clone, expected pass output, what failure looks like
+6. design decisions and why (including deliberate choices a newcomer might "fix")
+7. known limits
+8. prioritized next steps each with testable done-when (note Hivemind OS / Workflow Core plugs)
+9. working rules (keep demo green, simple code, verify real output, no fabricated sources, poteto-mode prose)
+10. context + sources (checked URLs only):
+    - https://dev.to/pennyforgehq/the-mcp-ecosystem-is-speaking-five-revisions-at-once-here-is-the-dated-count-3amd
+    - https://modelcontextprotocol.io/specification/2026-07-28/server/discover
+    - https://modelcontextprotocol.io/specification/2026-07-28/changelog
+    - https://earendil.com/posts/pi-1-0/
+
+Do NOT git init or publish; the parent pipeline owns publishing after verify.
